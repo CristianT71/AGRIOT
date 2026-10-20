@@ -31,7 +31,7 @@ namespace AGRIOT
 
         private void iniciarSesion_Click(object sender, System.EventArgs e)
         {
-            Registro Login = new Registro();
+            Dashboard Login = new Dashboard();
             Login.Show();
             this.Hide();
         }

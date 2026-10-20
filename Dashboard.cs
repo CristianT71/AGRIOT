@@ -1,11 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AGRIOT
@@ -17,7 +9,27 @@ namespace AGRIOT
             InitializeComponent();
         }
 
-        private void agriot_Click(object sender, EventArgs e)
+        private void logo_Click(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void panelVoltaje_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void contenido_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void valorTemperatura_Click(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void enviarPrompt_Click(object sender, System.EventArgs e)
         {
 
         }
