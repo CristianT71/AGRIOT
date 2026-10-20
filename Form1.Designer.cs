@@ -37,13 +37,12 @@
             // 
             this.Login.BackColor = System.Drawing.SystemColors.MenuText;
             this.Login.Controls.Add(this.textBox1);
-            this.Login.Location = new System.Drawing.Point(179, 98);
+            this.Login.Location = new System.Drawing.Point(33, 45);
             this.Login.Name = "Login";
             this.Login.Size = new System.Drawing.Size(735, 360);
-            this.Login.TabIndex = 0;
+            this.Login.TabIndex = 2;
             this.Login.TabStop = false;
             this.Login.Text = "Inciar Sesión";
-            this.Login.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
             // textBox1
             // 
@@ -51,13 +50,12 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(216, 22);
             this.textBox1.TabIndex = 0;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1096, 559);
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.Login);
             this.Name = "Form1";
             this.Text = "Form1";
