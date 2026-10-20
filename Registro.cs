@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace AGRIOT
 {
@@ -17,7 +9,27 @@ namespace AGRIOT
             InitializeComponent();
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private void usuario_TextChanged(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void correo_TextChanged(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void contrasena_TextChanged(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void confirmarContrasena_TextChanged(object sender, System.EventArgs e)
+        {
+
+        }
+
+        private void registrarse_Click(object sender, System.EventArgs e)
         {
 
         }
