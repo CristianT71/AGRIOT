@@ -31,7 +31,14 @@ namespace AGRIOT
 
         private void registrarse_Click(object sender, System.EventArgs e)
         {
+            
+        }
 
+        private void Login_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Login Registro = new Login();
+            Registro.Show();
+            this.Hide();
         }
     }
 }

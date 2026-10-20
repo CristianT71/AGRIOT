@@ -62,7 +62,7 @@
             this.titulo.AutoSize = true;
             this.titulo.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
             this.titulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(74)))), ((int)(((byte)(54)))));
-            this.titulo.Location = new System.Drawing.Point(145, 28);
+            this.titulo.Location = new System.Drawing.Point(124, 29);
             this.titulo.Name = "titulo";
             this.titulo.Size = new System.Drawing.Size(201, 41);
             this.titulo.TabIndex = 0;
@@ -73,7 +73,7 @@
             this.subtitulo.AutoSize = true;
             this.subtitulo.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.subtitulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.subtitulo.Location = new System.Drawing.Point(116, 70);
+            this.subtitulo.Location = new System.Drawing.Point(114, 70);
             this.subtitulo.Name = "subtitulo";
             this.subtitulo.Size = new System.Drawing.Size(221, 20);
             this.subtitulo.TabIndex = 1;
