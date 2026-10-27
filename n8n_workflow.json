@@ -1,0 +1,426 @@
+{
+  "name": "AGRIOT - Asistente agronómico Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "topics": "agro/estacion/resumen",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "MQTT Trigger",
+      "type": "n8n-nodes-base.mqttTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        560
+      ],
+      "credentials": {
+        "mqtt": {
+          "id": "REEMPLAZAR",
+          "name": "EMQX MQTT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Guarda la última lectura en memoria (para el chat) y la pasa a la tabla (para el reporte)\nconst sd = $getWorkflowStaticData('global');\nlet datos;\ntry {\n  datos = JSON.parse($json.message);\n} catch (e) {\n  return [];\n}\nsd.ultimo = datos;\nsd.recibido = new Date().toISOString();\nreturn [{ json: {\n  temperatura: datos.temperatura,\n  humedad: datos.humedad,\n  indice_uv: datos.indice_uv,\n  voltaje_mv: datos.voltaje_mv,\n} }];"
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Guardar último dato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "lecturas"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "temperatura": "={{ $json.temperatura }}",
+            "humedad": "={{ $json.humedad }}",
+            "indice_uv": "={{ $json.indice_uv }}",
+            "voltaje_mv": "={{ $json.voltaje_mv }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        }
+      },
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Guardar en tabla",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        560
+      ],
+      "notes": "Tabla \"lecturas\" con columnas numéricas: temperatura, humedad, indice_uv, voltaje_mv."
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "agriot-telegram-trigger",
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1a2b3d4-0001-4000-8000-0000000000c1",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/reporte",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "name": "¿Pide reporte?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mensaje del usuario en Telegram\nconst mensaje = $('Telegram Trigger').first().json.message.text || '';\n\n// Última lectura guardada por la rama MQTT\nconst sd = $getWorkflowStaticData('global');\nconst sensores = sd.ultimo || null;\nconst minutos = sd.recibido\n  ? Math.round((Date.now() - new Date(sd.recibido).getTime()) / 60000)\n  : null;\n\nconst datos = sensores\n  ? [\n      '- Temperatura: ' + (sensores.temperatura ?? 'sin dato') + ' °C',\n      '- Humedad relativa: ' + (sensores.humedad ?? 'sin dato') + ' %',\n      '- Índice UV: ' + sensores.indice_uv + ' (' + sensores.categoria_uv + ')',\n      '- Voltaje del sensor UV: ' + sensores.voltaje_mv + ' mV',\n      '- Antigüedad de la lectura: ' + (minutos === null ? 'desconocida' : 'hace ' + minutos + ' min'),\n    ].join('\\n')\n  : 'No hay datos disponibles de la estación todavía.';\n\nconst systemPrompt =\n  'Eres un ingeniero agrónomo asistente que responde por Telegram a un agricultor. ' +\n  'Cruza SIEMPRE su pregunta con las condiciones climáticas actuales de la estación de campo que se te entregan. ' +\n  'Usa solo esos datos; si falta alguno o no hay datos, dilo claramente y no inventes valores. ' +\n  'Si un dato aparece como 0 o N/A porque el sensor no está instalado, ignóralo y no lo menciones. ' +\n  'Responde en español, de forma clara y breve (máximo 150 palabras), con recomendaciones prácticas. ' +\n  'Referencias: temperatura ideal general 18-28 °C, humedad relativa ideal 50-70 %, ' +\n  'UV >= 6 (alto) implica riesgo de estrés en plantas jóvenes y para el personal en campo.';\n\nconst userPrompt =\n  '## Condiciones actuales de la estación\\n' + datos +\n  '\\n\\n## Mensaje del agricultor\\n' + mensaje;\n\nconst body = {\n  model: 'accounts/fireworks/models/gpt-oss-120b',\n  temperature: 0.3,\n  max_tokens: 2000,\n  reasoning_effort: 'low',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: userPrompt },\n  ],\n};\n\nreturn [{ json: { body } }];"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Armar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fireworks.ai/inference/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Fireworks AI (gpt-oss-120b)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REEMPLAZAR",
+          "name": "Fireworks API key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        360
+      ],
+      "webhookId": "agriot-telegram-send",
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "lecturas"
+        },
+        "returnAll": false,
+        "limit": 144,
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "a1b2c3d4-0010-4000-8000-000000000010",
+      "name": "Leer historial",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        40
+      ],
+      "alwaysOutputData": true,
+      "notes": "Últimas 144 filas (~24 h a una lectura cada 10 min), ordenadas por createdAt descendente."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Historial leído de la tabla (puede venir vacío)\nconst filas = $input.all()\n  .map(i => i.json)\n  .filter(r => r.temperatura !== undefined && r.temperatura !== null)\n  .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));\n\nconst serie = (campo) => filas.map(r => Number(r[campo])).filter(v => !isNaN(v));\nconst resumen = (nombre, v, unidad) => {\n  if (!v.length) return '- ' + nombre + ': sin datos';\n  const min = Math.min(...v), max = Math.max(...v);\n  const prom = v.reduce((a, b) => a + b, 0) / v.length;\n  const delta = v[v.length - 1] - v[0];\n  const tend = Math.abs(delta) < 0.5 ? 'estable' : (delta > 0 ? 'subiendo' : 'bajando');\n  return '- ' + nombre + ': mín ' + min.toFixed(1) + ', máx ' + max.toFixed(1) +\n         ', promedio ' + prom.toFixed(1) + ' ' + unidad + ', tendencia ' + tend;\n};\n\nconst uv = serie('indice_uv');\nconst hayUv = uv.some(v => v > 0);\n\nconst hora = (r) => new Date(r.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });\nconst periodo = filas.length\n  ? 'de ' + new Date(filas[0].createdAt).toLocaleString('es-ES') + ' a ' + new Date(filas[filas.length - 1].createdAt).toLocaleString('es-ES')\n  : 'sin datos';\n\nconst lineas = [\n  '- Periodo: ' + periodo,\n  '- Lecturas: ' + filas.length + ' (una cada ~10 min)',\n  resumen('Temperatura', serie('temperatura'), '°C'),\n  resumen('Humedad relativa', serie('humedad'), '%'),\n];\nif (hayUv) lineas.push(resumen('Índice UV', uv, ''));\n\nconst systemPrompt =\n  'Eres un ingeniero agrónomo que redacta reportes por Telegram para un agricultor. ' +\n  'Usa SOLO las estadísticas entregadas; no inventes valores. Si no hay lecturas, dilo. ' +\n  'Escribe en español, en texto plano SIN markdown (sin asteriscos ni #), con emojis y guiones. ' +\n  'Estructura: 1) Resumen del periodo, 2) Temperatura, 3) Humedad, 4) Riesgos detectados, 5) Recomendaciones prácticas. ' +\n  'Máximo 250 palabras. Referencias: temperatura ideal 18-28 °C, humedad relativa ideal 50-70 %.';\n\nconst body = {\n  model: 'accounts/fireworks/models/gpt-oss-120b',\n  temperature: 0.3,\n  max_tokens: 2500,\n  reasoning_effort: 'low',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: '## Estadísticas de la estación\\n' + lineas.join('\\n') + '\\n\\nGenera el reporte.' },\n  ],\n};\n\n// Gráfica con QuickChart (máx. 48 puntos para que la URL no sea enorme)\nconst paso = Math.max(1, Math.ceil(filas.length / 48));\nconst muestra = filas.filter((_, i) => i % paso === 0);\nconst config = {\n  type: 'line',\n  data: {\n    labels: muestra.map(hora),\n    datasets: [\n      { label: 'Temperatura (°C)', data: muestra.map(r => Number(r.temperatura)), borderColor: '#db6635', fill: false },\n      { label: 'Humedad (%)', data: muestra.map(r => Number(r.humedad)), borderColor: '#3182ab', fill: false },\n    ],\n  },\n  options: { title: { display: true, text: 'AGRIOT - Temperatura y humedad' } },\n};\nconst chartUrl = 'https://quickchart.io/chart?w=700&h=350&bkg=white&c=' + encodeURIComponent(JSON.stringify(config));\n\nreturn [{ json: { body, chartUrl } }];"
+      },
+      "id": "a1b2c3d4-0011-4000-8000-000000000011",
+      "name": "Armar reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fireworks.ai/inference/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0012-4000-8000-000000000012",
+      "name": "Fireworks AI (reporte)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        40
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REEMPLAZAR",
+          "name": "Fireworks API key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a1b2c3d4-0013-4000-8000-000000000013",
+      "name": "Enviar reporte",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1300,
+        40
+      ],
+      "webhookId": "agriot-telegram-report",
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "file": "={{ $('Armar reporte').first().json.chartUrl }}",
+        "additionalFields": {
+          "caption": "Temperatura y humedad (últimas 24 h)"
+        }
+      },
+      "id": "a1b2c3d4-0014-4000-8000-000000000014",
+      "name": "Enviar gráfica",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1560,
+        40
+      ],
+      "webhookId": "agriot-telegram-chart",
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "MQTT Trigger": {
+      "main": [
+        [
+          {
+            "node": "Guardar último dato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar último dato": {
+      "main": [
+        [
+          {
+            "node": "Guardar en tabla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "¿Pide reporte?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pide reporte?": {
+      "main": [
+        [
+          {
+            "node": "Leer historial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar prompt": {
+      "main": [
+        [
+          {
+            "node": "Fireworks AI (gpt-oss-120b)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fireworks AI (gpt-oss-120b)": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer historial": {
+      "main": [
+        [
+          {
+            "node": "Armar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar reporte": {
+      "main": [
+        [
+          {
+            "node": "Fireworks AI (reporte)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fireworks AI (reporte)": {
+      "main": [
+        [
+          {
+            "node": "Enviar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar reporte": {
+      "main": [
+        [
+          {
+            "node": "Enviar gráfica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

@@ -53,13 +53,6 @@
             this.tituloHistorial = new System.Windows.Forms.Label();
             this.historial = new System.Windows.Forms.DataGridView();
             this.exportar = new System.Windows.Forms.Button();
-            this.panelAsistente = new System.Windows.Forms.Panel();
-            this.tituloAsistente = new System.Windows.Forms.Label();
-            this.alertas = new System.Windows.Forms.TextBox();
-            this.generarReporte = new System.Windows.Forms.Button();
-            this.prompt = new System.Windows.Forms.TextBox();
-            this.enviarPrompt = new System.Windows.Forms.Button();
-            this.respuestaIa = new System.Windows.Forms.TextBox();
             this.menuLateral.SuspendLayout();
             this.contenido.SuspendLayout();
             this.encabezado.SuspendLayout();
@@ -71,7 +64,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.grafico)).BeginInit();
             this.panelHistorial.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.historial)).BeginInit();
-            this.panelAsistente.SuspendLayout();
             this.SuspendLayout();
             // 
             // hora
@@ -179,7 +171,6 @@
             this.contenido.Controls.Add(this.panelVoltaje);
             this.contenido.Controls.Add(this.panelGrafico);
             this.contenido.Controls.Add(this.panelHistorial);
-            this.contenido.Controls.Add(this.panelAsistente);
             this.contenido.Dock = System.Windows.Forms.DockStyle.Fill;
             this.contenido.Location = new System.Drawing.Point(190, 0);
             this.contenido.Name = "contenido";
@@ -380,7 +371,7 @@
             this.panelGrafico.Controls.Add(this.grafico);
             this.panelGrafico.Location = new System.Drawing.Point(22, 225);
             this.panelGrafico.Name = "panelGrafico";
-            this.panelGrafico.Size = new System.Drawing.Size(600, 235);
+            this.panelGrafico.Size = new System.Drawing.Size(600, 485);
             this.panelGrafico.TabIndex = 5;
             // 
             // tituloGrafico
@@ -413,7 +404,7 @@
             series14.Name = "Humedad";
             this.grafico.Series.Add(series13);
             this.grafico.Series.Add(series14);
-            this.grafico.Size = new System.Drawing.Size(580, 185);
+            this.grafico.Size = new System.Drawing.Size(580, 435);
             this.grafico.TabIndex = 1;
             // 
             // panelHistorial
@@ -424,7 +415,7 @@
             this.panelHistorial.Controls.Add(this.exportar);
             this.panelHistorial.Location = new System.Drawing.Point(640, 225);
             this.panelHistorial.Name = "panelHistorial";
-            this.panelHistorial.Size = new System.Drawing.Size(416, 235);
+            this.panelHistorial.Size = new System.Drawing.Size(416, 485);
             this.panelHistorial.TabIndex = 6;
             // 
             // tituloHistorial
@@ -454,7 +445,7 @@
             this.historial.ReadOnly = true;
             this.historial.RowHeadersVisible = false;
             this.historial.RowHeadersWidth = 51;
-            this.historial.Size = new System.Drawing.Size(386, 140);
+            this.historial.Size = new System.Drawing.Size(386, 390);
             this.historial.TabIndex = 1;
             // 
             // exportar
@@ -463,99 +454,12 @@
             this.exportar.FlatAppearance.BorderSize = 0;
             this.exportar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.exportar.ForeColor = System.Drawing.Color.White;
-            this.exportar.Location = new System.Drawing.Point(245, 190);
+            this.exportar.Location = new System.Drawing.Point(245, 440);
             this.exportar.Name = "exportar";
             this.exportar.Size = new System.Drawing.Size(156, 30);
             this.exportar.TabIndex = 2;
             this.exportar.Text = "Exportar historial";
             this.exportar.UseVisualStyleBackColor = false;
-            // 
-            // panelAsistente
-            // 
-            this.panelAsistente.BackColor = System.Drawing.Color.White;
-            this.panelAsistente.Controls.Add(this.tituloAsistente);
-            this.panelAsistente.Controls.Add(this.alertas);
-            this.panelAsistente.Controls.Add(this.generarReporte);
-            this.panelAsistente.Controls.Add(this.prompt);
-            this.panelAsistente.Controls.Add(this.enviarPrompt);
-            this.panelAsistente.Controls.Add(this.respuestaIa);
-            this.panelAsistente.Location = new System.Drawing.Point(22, 480);
-            this.panelAsistente.Name = "panelAsistente";
-            this.panelAsistente.Size = new System.Drawing.Size(1034, 250);
-            this.panelAsistente.TabIndex = 7;
-            // 
-            // tituloAsistente
-            // 
-            this.tituloAsistente.AutoSize = true;
-            this.tituloAsistente.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.tituloAsistente.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(74)))), ((int)(((byte)(54)))));
-            this.tituloAsistente.Location = new System.Drawing.Point(15, 12);
-            this.tituloAsistente.Name = "tituloAsistente";
-            this.tituloAsistente.Size = new System.Drawing.Size(192, 25);
-            this.tituloAsistente.TabIndex = 0;
-            this.tituloAsistente.Text = "Asistente inteligente";
-            // 
-            // alertas
-            // 
-            this.alertas.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(249)))), ((int)(((byte)(230)))));
-            this.alertas.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.alertas.Location = new System.Drawing.Point(18, 45);
-            this.alertas.Multiline = true;
-            this.alertas.Name = "alertas";
-            this.alertas.ReadOnly = true;
-            this.alertas.Size = new System.Drawing.Size(470, 78);
-            this.alertas.TabIndex = 1;
-            this.alertas.Text = "Alertas automáticas\r\nNo hay diagnósticos disponibles. Esperando datos del ESP32.." +
-    ".";
-            // 
-            // generarReporte
-            // 
-            this.generarReporte.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(116)))), ((int)(((byte)(78)))));
-            this.generarReporte.FlatAppearance.BorderSize = 0;
-            this.generarReporte.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.generarReporte.ForeColor = System.Drawing.Color.White;
-            this.generarReporte.Location = new System.Drawing.Point(18, 137);
-            this.generarReporte.Name = "generarReporte";
-            this.generarReporte.Size = new System.Drawing.Size(180, 34);
-            this.generarReporte.TabIndex = 2;
-            this.generarReporte.Text = "Generar reporte";
-            this.generarReporte.UseVisualStyleBackColor = false;
-            // 
-            // prompt
-            // 
-            this.prompt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.prompt.Location = new System.Drawing.Point(524, 45);
-            this.prompt.Multiline = true;
-            this.prompt.Name = "prompt";
-            this.prompt.Size = new System.Drawing.Size(385, 45);
-            this.prompt.TabIndex = 3;
-            this.prompt.Text = "Escribe una pregunta para el asistente...";
-            // 
-            // enviarPrompt
-            // 
-            this.enviarPrompt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(116)))), ((int)(((byte)(78)))));
-            this.enviarPrompt.FlatAppearance.BorderSize = 0;
-            this.enviarPrompt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.enviarPrompt.ForeColor = System.Drawing.Color.White;
-            this.enviarPrompt.Location = new System.Drawing.Point(919, 45);
-            this.enviarPrompt.Name = "enviarPrompt";
-            this.enviarPrompt.Size = new System.Drawing.Size(100, 45);
-            this.enviarPrompt.TabIndex = 4;
-            this.enviarPrompt.Text = "Enviar";
-            this.enviarPrompt.UseVisualStyleBackColor = false;
-            this.enviarPrompt.Click += new System.EventHandler(this.enviarPrompt_Click);
-            // 
-            // respuestaIa
-            // 
-            this.respuestaIa.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(249)))));
-            this.respuestaIa.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.respuestaIa.Location = new System.Drawing.Point(524, 117);
-            this.respuestaIa.Multiline = true;
-            this.respuestaIa.Name = "respuestaIa";
-            this.respuestaIa.ReadOnly = true;
-            this.respuestaIa.Size = new System.Drawing.Size(495, 106);
-            this.respuestaIa.TabIndex = 5;
-            this.respuestaIa.Text = "Respuesta del asistente";
             // 
             // Dashboard
             // 
@@ -587,8 +491,6 @@
             this.panelHistorial.ResumeLayout(false);
             this.panelHistorial.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.historial)).EndInit();
-            this.panelAsistente.ResumeLayout(false);
-            this.panelAsistente.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -623,13 +525,6 @@
         private System.Windows.Forms.Label tituloHistorial;
         private System.Windows.Forms.DataGridView historial;
         private System.Windows.Forms.Button exportar;
-        private System.Windows.Forms.Panel panelAsistente;
-        private System.Windows.Forms.Label tituloAsistente;
-        private System.Windows.Forms.TextBox alertas;
-        private System.Windows.Forms.Button generarReporte;
-        private System.Windows.Forms.TextBox prompt;
-        private System.Windows.Forms.Button enviarPrompt;
-        private System.Windows.Forms.TextBox respuestaIa;
         private System.Windows.Forms.DataGridViewTextBoxColumn hora;
         private System.Windows.Forms.DataGridViewTextBoxColumn temperatura;
         private System.Windows.Forms.DataGridViewTextBoxColumn humedad;
