@@ -1,0 +1,8 @@
+Coloca aquí los 3 archivos del modelo de Teachable Machine (pose):
+  model.json
+  metadata.json
+  weights.bin
+
+Cómo exportarlos: en Teachable Machine -> Exportar modelo -> pestaña "Tensorflow.js"
+-> "Descargar" (zip) y extrae los 3 archivos en esta carpeta.
+Clases esperadas: Violeta, Kevin, Cristian y Otros.

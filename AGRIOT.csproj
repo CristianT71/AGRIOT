@@ -41,10 +41,13 @@
   <ItemGroup>
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include=".env" Condition="Exists('.env')" CopyToOutputDirectory="PreserveNewest" />
     <None Include=".env.example" />
+    <Content Include="Web\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Modelos\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

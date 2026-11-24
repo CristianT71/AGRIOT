@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGRIOT - Reconocimiento</title>
+<style>
+  :root { --verde:#2e9e6b; --texto:#1f2d27; --suave:#6b7c74; --borde:#e2e8e5; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI",sans-serif; background:#fff; color:var(--texto);
+         display:flex; flex-direction:column; align-items:center; padding:18px 24px; }
+  #vista { width:380px; height:380px; border-radius:20px; overflow:hidden; background:#f3f6f4;
+           border:1px solid var(--borde); display:flex; align-items:center; justify-content:center; position:relative; }
+  #vista canvas { width:100%; height:100%; object-fit:cover; }
+  #mic { width:96px; height:96px; border-radius:50%; background:var(--verde); opacity:.9; }
+  #mic.escuchando { animation:pulso 1.4s ease-in-out infinite; }
+  @keyframes pulso { 0%,100% { transform:scale(1); opacity:.9 } 50% { transform:scale(1.18); opacity:.55 } }
+  #msg, #barras { display:none; }
+  #msg { margin:14px 0 6px; color:var(--suave); font-size:14px; text-align:center; min-height:20px; }
+  #msg.error { color:#aa2323; }
+  #barras { width:340px; }
+  .fila { display:flex; align-items:center; gap:10px; margin:7px 0; font-size:13px; }
+  .fila .n { width:84px; font-weight:600; }
+  .fila .b { flex:1; height:10px; background:#eef2f0; border-radius:6px; overflow:hidden; }
+  .fila .b i { display:block; height:100%; width:0; background:var(--verde); transition:width .12s; }
+  .fila .p { width:40px; text-align:right; color:var(--suave); }
+</style>
+</head>
+<body>
+  <div id="vista"></div>
+  <div id="msg">Cargando modelo…</div>
+  <div id="barras"></div>
+
+<script>
+const modo = new URLSearchParams(location.search).get('modo');       // rostro | pose | voz
+const base = location.origin + '/Modelos/' + modo + '/';
+const $ = id => document.getElementById(id);
+
+function enviar(obj) { if (window.chrome && chrome.webview) chrome.webview.postMessage(obj); }
+function error(texto) { $('msg').textContent = texto; $('msg').className = 'error'; enviar({ tipo: 'error', mensaje: texto }); }
+
+function cargar(src) {
+  return new Promise((ok, fallo) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = ok;
+    s.onerror = () => fallo(new Error('No se pudo cargar ' + src + ' (¿hay internet?)'));
+    document.head.appendChild(s);
+  });
+}
+
+const CDN = 'https://cdn.jsdelivr.net/npm/';
+const TFJS = CDN + '@tensorflow/tfjs@1.3.1/dist/tf.min.js';
+
+let filas = {};
+function pintar(preds) {                         // preds: [{ clase, prob }]
+  const cont = $('barras');
+  for (const p of preds) {
+    if (!filas[p.clase]) {
+      const f = document.createElement('div'); f.className = 'fila';
+      f.innerHTML = '<span class="n"></span><span class="b"><i></i></span><span class="p"></span>';
+      f.querySelector('.n').textContent = p.clase;
+      cont.appendChild(f); filas[p.clase] = f;
+    }
+    filas[p.clase].querySelector('i').style.width = (p.prob * 100).toFixed(0) + '%';
+    filas[p.clase].querySelector('.p').textContent = (p.prob * 100).toFixed(0) + '%';
+  }
+}
+
+let ultimoEnvio = 0;
+function reportar(preds) {
+  pintar(preds);
+  const ahora = performance.now();
+  if (ahora - ultimoEnvio < 120) return;         // ~8 mensajes por segundo
+  ultimoEnvio = ahora;
+  enviar({ tipo: 'prediccion', predicciones: preds });
+}
+
+let detectorListo = false;
+async function cargarDetectorCara() {
+  await cargar(location.origin + '/Web/libs/face-api.js');
+  await faceapi.nets.tinyFaceDetector.loadFromUri(location.origin + '/Web/libs/');
+  detectorListo = true;
+}
+
+let hayAntes = null;
+function presencia(hay) {                        // solo avisa cuando cambia (y cada 1 s como latido)
+  const ahora = performance.now();
+  if (hay === hayAntes && ahora - presencia.t < 1000) return;
+  hayAntes = hay; presencia.t = ahora;
+  enviar({ tipo: 'presencia', hay });
+}
+presencia.t = 0;
+
+async function iniciarCamara(tipo) {
+  const modelo = base + 'model.json', meta = base + 'metadata.json';
+  const TAM = 380;
+  let model, webcam;
+  if (tipo === 'pose') {
+    await cargar(TFJS);
+    await cargar(CDN + '@tensorflow-models/posenet@2.2.1/dist/posenet.min.js');
+    await cargar(CDN + '@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js');
+    model = await tmPose.load(modelo, meta);
+    webcam = new tmPose.Webcam(TAM, TAM, true);
+  } else {
+    await cargar(TFJS);
+    await cargar(CDN + '@teachablemachine/image@0.8/dist/teachablemachine-image.min.js');
+    model = await tmImage.load(modelo, meta);
+    await cargarDetectorCara();
+    webcam = new tmImage.Webcam(TAM, TAM, true);
+  }
+  await webcam.setup();
+  await webcam.play();
+  $('vista').appendChild(webcam.canvas);
+  enviar({ tipo: 'listo' });
+
+  const opciones = detectorListo ? new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }) : null;
+
+  async function bucle() {
+    webcam.update();
+    try {
+      if (tipo === 'pose') {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const hay = !!pose && pose.score >= 0.4;
+        presencia(hay);
+        if (hay) {
+          const salida = await model.predict(posenetOutput);
+          reportar(salida.map(p => ({ clase: p.className, prob: p.probability })));
+        }
+      } else {
+        // Hay cara si el detector la encuentra y ocupa al menos el 25 % del ancho (cerca de la cámara)
+        const det = await faceapi.detectSingleFace(webcam.canvas, opciones);
+        const hay = !!det && det.box.width >= TAM * 0.25;
+        presencia(hay);
+        if (hay) {
+          const salida = await model.predict(webcam.canvas);
+          reportar(salida.map(p => ({ clase: p.className, prob: p.probability })));
+        }
+      }
+    } catch (e) {
+      error('Error al analizar: ' + (e && e.message ? e.message : e));
+      return;
+    }
+    requestAnimationFrame(bucle);
+  }
+  requestAnimationFrame(bucle);
+}
+
+async function iniciarVoz() {
+  await cargar(TFJS);
+  await cargar(CDN + '@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js');
+  const rec = speechCommands.create('BROWSER_FFT', undefined, base + 'model.json', base + 'metadata.json');
+  await rec.ensureModelLoaded();
+  const etiquetas = rec.wordLabels();
+  $('vista').innerHTML = '<div id="mic" class="escuchando"></div>';
+  $('msg').textContent = 'Di tu nombre en voz alta';
+  enviar({ tipo: 'listo' });
+  rec.listen(res => {
+    const scores = Array.from(res.scores);
+    reportar(etiquetas.map((e, i) => ({ clase: e, prob: scores[i] })));
+  }, { includeSpectrogram: false, probabilityThreshold: 0.5, invokeCallbackOnNoiseAndUnknown: true, overlapFactor: 0.5 });
+}
+
+(async () => {
+  try {
+    if (modo === 'voz') await iniciarVoz();
+    else if (modo === 'rostro' || modo === 'pose') await iniciarCamara(modo);
+    else throw new Error('Modo desconocido: ' + modo);
+  } catch (e) {
+    error('No se pudo iniciar: ' + (e && e.message ? e.message : e));
+  }
+})();
+</script>
+</body>
+</html>

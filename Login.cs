@@ -7,26 +7,7 @@ namespace AGRIOT
         public Login()
         {
             InitializeComponent();
-        }
-
-        private void Login_Load(object sender, System.EventArgs e)
-        {
-
-        }
-
-        private void contenedor_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void usuario_TextChanged(object sender, System.EventArgs e)
-        {
-
-        }
-
-        private void contrasena_TextChanged(object sender, System.EventArgs e)
-        {
-
+            AcceptButton = iniciarSesion;
         }
 
         private void iniciarSesion_Click(object sender, System.EventArgs e)
@@ -46,16 +27,36 @@ namespace AGRIOT
                 return;
             }
 
+            AbrirDashboard("Cristian");
+        }
+
+        private void AbrirDashboard(string nombre)
+        {
             Dashboard dashboard = new Dashboard();
+            dashboard.UsuarioActual = nombre;
             dashboard.FormClosed += (s, args) => Application.Exit();
             dashboard.Show();
             this.Hide();
         }
 
+        private void IniciarConModelo(ModoBiometrico modo)
+        {
+            using (var ventana = new LoginBiometrico(modo))
+            {
+                if (ventana.ShowDialog(this) == DialogResult.OK)
+                    AbrirDashboard(ventana.UsuarioIdentificado);
+            }
+        }
+
+        private void accesoRostro_Click(object sender, System.EventArgs e) { IniciarConModelo(ModoBiometrico.Rostro); }
+        private void accesoPose_Click(object sender, System.EventArgs e) { IniciarConModelo(ModoBiometrico.Pose); }
+        private void accesoVoz_Click(object sender, System.EventArgs e) { IniciarConModelo(ModoBiometrico.Voz); }
+
         private void registro_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Registro Login = new Registro();
-            Login.Show();
+            Registro pantallaRegistro = new Registro();
+            pantallaRegistro.FormClosed += (s, args) => this.Show();
+            pantallaRegistro.Show();
             this.Hide();
         }
     }
